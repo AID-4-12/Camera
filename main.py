@@ -1,20 +1,21 @@
 from ultralytics import YOLO
 import cv2
 import math
+from picamera2 import Picamera2
+
 # start webcam
-cap = cv2.VideoCapture(0)
-cap.set(3, 640)
-cap.set(4, 480)
+picam2 = Picamera2()
+picam2.start()
 
 # model
-model = YOLO("models/cat-v3-430-imgs.pt")
+model = YOLO("./models/cat-v3-430-imgs.pt")
 
 # object classes
 classNames = ["cats"]
 
 
 while True:
-    success, img = cap.read()
+    success, img = picam2.capture_array()
     results = model(img, stream=True)
 
     # coordinates
