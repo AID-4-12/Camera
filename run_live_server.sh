@@ -1,0 +1,1 @@
+libcamera-vid -t 0 --inline -o - | cvlc -vvv stream:///dev/stdin --sout '#rtp{sdp=rtsp://:8080/}'
