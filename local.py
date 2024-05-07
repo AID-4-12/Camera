@@ -1,46 +1,48 @@
 from ultralytics import YOLO
 import cv2
-import requests, time
 import math
-from picamera2 import Picamera2
+import requests  # 추가된 라이브러리
+import time
 
-# start webcam
-picam2 = Picamera2()
-picam2.start()
+# 웹캠 시작
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-# model
-model = YOLO("./models/cat-v3-430-imgs.pt")
+# 모델 로드
+model = YOLO("models/cat-v3-430-imgs.pt")
 
-# object classes
+# 객체 클래스
 classNames = ["cats"]
 
-target_url = "http://localhost:8000/set"
+# 감지된 "cats"를 보내고자 하는 웹사이트 URL
+target_url = "http://localhost:8000/set"  # 여기에 요청을 보내고자 하는 URL을 입력하세요
 
 while True:
-    success, img = picam2.capture_array()
+    success, img = cap.read()
     results = model(img, stream=True)
 
-    # coordinates
+    # 감지된 객체 처리
     for r in results:
         boxes = r.boxes
 
         for box in boxes:
-            # bounding box
+            # 바운딩 박스 좌표 추출
             x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2) # convert to int values
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)  # 정수 값으로 변환
 
-            # put box in cam
+            # 이미지에 바운딩 박스 표시
             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
 
-            # confidence
-            confidence = math.ceil((box.conf[0]*100))/100
-            print("Confidence --->",confidence)
+            # 신뢰도
+            confidence = math.ceil((box.conf[0] * 100)) / 100
+            print("Confidence --->", confidence)
 
-            # class name
+            # 클래스 이름
             cls = int(box.cls[0])
             print("Class name -->", classNames[cls])
 
-            # object details
+            # 객체 세부 정보
             org = [x1, y1]
             font = cv2.FONT_HERSHEY_SIMPLEX
             fontScale = 1
@@ -48,6 +50,7 @@ while True:
             thickness = 2
 
             cv2.putText(img, classNames[cls], org, font, fontScale, color, thickness)
+
             # "cats"가 감지된 경우 웹사이트에 요청 보내기
             if classNames[cls] == "cats":
                 data = {
@@ -65,6 +68,7 @@ while True:
                 else:
                     print("Sleep 5 Second")
                     time.sleep(5)
+                
 
     cv2.imshow('Webcam', img)
     if cv2.waitKey(1) == ord('q'):
